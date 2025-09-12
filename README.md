@@ -1,96 +1,125 @@
 Sistem Pengaduan Masyarakat 🏢
-
 Sistem pengaduan masyarakat berbasis web yang memungkinkan warga untuk melaporkan masalah dan keluhan secara online. Admin dapat menanggapi dan mengelola laporan dengan mudah.
 
 ⚠️ PERINGATAN KEAMANAN
-SISTEM INI DIBUAT DENGAN KERENTANAN KEAMANAN YANG DISENGAJA UNTUK TUJUAN PEMBELAJARAN DAN PENGETESAN KEAMANAN (PENTEST). JANGAN GUNAKAN DI PRODUCTION ENVIRONMENT!
+SISTEM INI DIBUAT DENGAN KERENTANAN KEAMANAN YANG DISENGAJA UNTUK TUJUAN PEMBELAJARAN DAN PENGETESAN KEAMANAN (PENTEST). JANGAN GUNAKAN DI LINGKUNGAN PRODUKSI!
 
-🎯 Tujuan Project
-Project ini dibuat khusus untuk:
-Pembelajaran tentang keamanan web application
-Latihan penetration testing
-Memahami berbagai jenis kerentanan web yang umum
+🎯 Tujuan Proyek
+Proyek ini dibuat khusus untuk:
+
+Pembelajaran tentang keamanan aplikasi web.
+
+Latihan penetration testing.
+
+Memahami berbagai jenis kerentanan web yang umum.
 
 🛠️ Teknologi yang Digunakan
 Backend: PHP Native
+
 Frontend: Bootstrap 5, JavaScript
+
 Database: MySQL
-Server: XAMPP / Laragon (local development)
+
+Server: XAMPP / Laragon (untuk pengembangan lokal)
 
 📦 Instalasi
-Prerequisites
+Prasyarat
 PHP 7.4 atau lebih tinggi
+
 MySQL 5.7 atau lebih tinggi
+
 Web server (Apache/Nginx)
-Composer (optional)
+
+Composer (opsional)
+
 Langkah Instalasi
 Clone Repository
 
-bash
+Bash
+
 git clone https://github.com/username/sistem-pengaduan.git
 cd sistem-pengaduan
 Setup Database
+Buat database baru dan impor file .sql yang disediakan.
 
-sql
+SQL
+
 CREATE DATABASE sistem_pengaduan;
 USE sistem_pengaduan;
-
--- Import file database.sql yang disediakan
+-- Import file database.sql
 Konfigurasi Database
-Edit file config/koneksi.php:
+Salin dan sesuaikan file config/koneksi.php dengan detail koneksi Anda:
 
-php
+PHP
+
+<?php
 $host = "localhost";
 $user = "username_db";
 $pass = "password_db"; 
-$db = "sistem_pengaduan";
-Setup Uploads Directory
+$db   = "sistem_pengaduan";
+?>
+Setup Direktori Uploads
+Buat direktori uploads dan berikan izin yang sesuai.
 
-bash
+Bash
+
 mkdir uploads
 chmod 755 uploads
 Akses Aplikasi
-Buka browser dan akses: http://localhost/sistem-pengaduan
+Buka browser Anda dan akses: http://localhost/sistem-pengaduan
 
-👥 Default Login
+👥 Akun Default
 Admin
-Username: ####
-Paswd: ####
+Username: admin (disarankan)
+
+Password: password (disarankan)
 
 User
-username:soc
-paswd:soc
+Username: soc
+
+Password: soc
 
 🚀 Fitur yang Tersedia
 Untuk Masyarakat (User)
 📝 Registrasi akun baru
-📤 Membuat laporan pengaduan
-📷 Upload foto bukti
-👀 Melihat riwayat laporan
-✏️ Mengedit laporan sendiri
-❌ Menghapus laporan sendiri
 
+📤 Membuat laporan pengaduan
+
+📷 Upload foto bukti
+
+👀 Melihat riwayat laporan
+
+✏️ Mengedit laporan sendiri
+
+❌ Menghapus laporan sendiri
 
 Untuk Admin
 👥 Kelola semua laporan
+
 📊 Dashboard statistik
-💬 Beri tanggapan pada laporan
-📋 Ubah status laporan
-👨‍💼 Tambah admin baru
-⚠️ SQL Executor (for testing)
-📝 License
-Project ini dilisensikan di bawah MIT License - lihat file LICENSE untuk detail lengkap.
+
+💬 Memberi tanggapan pada laporan
+
+📋 Mengubah status laporan
+
+👨‍💼 Menambah admin baru
+
+⚠️ SQL Executor (untuk pengujian)
+
+📝 Lisensi
+Proyek ini dilisensikan di bawah MIT License - lihat file LICENSE untuk detail lengkap.
 
 ⚠️ Disclaimer
-PERINGATAN: Project ini dibuat khusus untuk tujuan edukasi dan testing keamanan.
+PERINGATAN: Proyek ini dibuat khusus untuk tujuan edukasi dan pengujian keamanan. Penulis tidak bertanggung jawab atas penyalahgunaan kode atau kerentanan yang ada.
 
 🤝 Kontribusi
-Contribusi dipersilakan! Silakan fork project ini dan submit pull request untuk perbaikan atau tambahan fitur.
+Kontribusi sangat kami harapkan! Silakan fork proyek ini dan ajukan pull request untuk perbaikan atau tambahan fitur.
 
 📞 Kontak
 Untuk pertanyaan atau informasi lebih lanjut:
+
 Email: suanggiLaut@gmail.com
+
 Issues: GitHub Issues
+
 Selamat Mencoba dan Happy Pentesting! 🎯
-
-
