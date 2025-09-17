@@ -2,23 +2,19 @@
 include '../template/header.php';
 include '../config/koneksi.php';
 
-// Pastikan session sudah dimulai
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Validasi level admin dengan lebih aman
 if (!isset($_SESSION['level']) || $_SESSION['level'] !== 'admin') {
     header("Location: ../user/dashboard.php");
     exit();
 }
 
-// CSRF Token untuk form
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
-// Validasi dan sanitasi ID laporan dari URL
 $laporan_id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 if (!$laporan_id || $laporan_id <= 0) {
     $_SESSION['error'] = "ID laporan tidak valid!";
@@ -26,7 +22,6 @@ if (!$laporan_id || $laporan_id <= 0) {
     exit();
 }
 
-// Query dengan prepared statement untuk mendapatkan detail laporan
 $laporan_query = "SELECT l.*, u.nama as nama_pelapor 
                   FROM laporan l 
                   JOIN users u ON l.user_id = u.id 
@@ -43,7 +38,6 @@ if (!$laporan) {
     exit();
 }
 
-// Query dengan prepared statement untuk mendapatkan tanggapan
 $tanggapan_query = "SELECT t.*, u.nama as nama_admin 
                     FROM tanggapan t 
                     JOIN users u ON t.admin_id = u.id 
@@ -54,10 +48,8 @@ mysqli_stmt_bind_param($tanggapan_stmt, "i", $laporan_id);
 mysqli_stmt_execute($tanggapan_stmt);
 $tanggapan_result = mysqli_stmt_get_result($tanggapan_stmt);
 
-// Proses update status
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_status'])) {
     
-    // Validasi CSRF token
     if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
         $_SESSION['error'] = "Token keamanan tidak valid!";
         header("Location: detail_laporan.php?id=" . $laporan_id);
@@ -73,7 +65,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_status'])) {
         exit();
     }
     
-    // Update status dengan prepared statement
     $update_query = "UPDATE laporan SET status = ? WHERE id = ?";
     $update_stmt = mysqli_prepare($koneksi, $update_query);
     mysqli_stmt_bind_param($update_stmt, "si", $status, $laporan_id);
@@ -82,7 +73,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_status'])) {
         $_SESSION['success'] = "Status berhasil diperbarui!";
         mysqli_stmt_close($update_stmt);
         
-        // Regenerate CSRF token
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
         
         header("Location: detail_laporan.php?id=" . $laporan_id);
@@ -95,10 +85,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_status'])) {
     }
 }
 
-// Proses tambah tanggapan
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['tambah_tanggapan'])) {
     
-    // Validasi CSRF token
     if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
         $_SESSION['error'] = "Token keamanan tidak valid!";
         header("Location: detail_laporan.php?id=" . $laporan_id);
@@ -108,7 +96,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['tambah_tanggapan'])) {
     $isi_tanggapan = trim(filter_input(INPUT_POST, 'isi_tanggapan', FILTER_SANITIZE_STRING));
     $admin_id = $_SESSION['user_id'];
     
-    // Validasi input
     if (empty($isi_tanggapan)) {
         $_SESSION['error'] = "Isi tanggapan tidak boleh kosong!";
         header("Location: detail_laporan.php?id=" . $laporan_id);
@@ -121,14 +108,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['tambah_tanggapan'])) {
         exit();
     }
     
-    // Insert tanggapan dengan prepared statement
     $insert_query = "INSERT INTO tanggapan (laporan_id, admin_id, isi_tanggapan) 
                      VALUES (?, ?, ?)";
     $insert_stmt = mysqli_prepare($koneksi, $insert_query);
     mysqli_stmt_bind_param($insert_stmt, "iis", $laporan_id, $admin_id, $isi_tanggapan);
     
     if (mysqli_stmt_execute($insert_stmt)) {
-        // Update status menjadi diproses jika masih menunggu
         if ($laporan['status'] == 'menunggu') {
             $update_query = "UPDATE laporan SET status = 'diproses' WHERE id = ?";
             $update_stmt = mysqli_prepare($koneksi, $update_query);
@@ -140,7 +125,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['tambah_tanggapan'])) {
         $_SESSION['success'] = "Tanggapan berhasil ditambahkan!";
         mysqli_stmt_close($insert_stmt);
         
-        // Regenerate CSRF token
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
         
         header("Location: detail_laporan.php?id=" . $laporan_id);
@@ -153,7 +137,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['tambah_tanggapan'])) {
     }
 }
 
-// Tampilkan pesan error/success dari session
 $error = $_SESSION['error'] ?? '';
 $success = $_SESSION['success'] ?? '';
 unset($_SESSION['error'], $_SESSION['success']);
@@ -181,12 +164,10 @@ unset($_SESSION['error'], $_SESSION['success']);
                     <p><strong>Lokasi:</strong> <?php echo htmlspecialchars($laporan['lokasi']); ?></p>
                 <?php endif; ?>
                 
-                <!-- Tampilkan foto jika ada -->
                 <?php if (!empty($laporan['foto'])): ?>
                     <div class="mb-3">
                         <strong>Foto Bukti:</strong><br>
                         <?php
-                        // Validasi path file untuk mencegah directory traversal
                         $safe_filename = basename($laporan['foto']);
                         $file_path = '../uploads/' . $safe_filename;
                         
@@ -258,9 +239,9 @@ unset($_SESSION['error'], $_SESSION['success']);
 </div>
 
 <?php 
-// Tutup statement
 if (isset($laporan_stmt)) mysqli_stmt_close($laporan_stmt);
 if (isset($tanggapan_stmt)) mysqli_stmt_close($tanggapan_stmt);
 
 include '../template/footer.php'; 
+
 ?>
