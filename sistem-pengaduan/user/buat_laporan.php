@@ -2,7 +2,6 @@
 include '../template/header.php';
 include '../config/koneksi.php';
 
-// Pastikan hanya user yang bisa akses
 if ($_SESSION['level'] != 'user') {
     header("Location: ../admin/dashboard.php");
     exit();
@@ -17,11 +16,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $isi = mysqli_real_escape_string($koneksi, $_POST['isi']);
     $user_id = $_SESSION['user_id'];
     
-    // Validasi
     if (empty($judul) || empty($isi)) {
         $error = "Judul dan isi laporan harus diisi!";
     } else {
-        // Proses upload foto
         $foto_name = '';
         if (!empty($_FILES['foto']['name'])) {
             $foto = $_FILES['foto'];
@@ -30,26 +27,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $target_file = $target_dir . $foto_name;
             $imageFileType = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
             
-            // Check jika file adalah gambar
             $check = getimagesize($foto["tmp_name"]);
             if ($check === false) {
                 $error = "File yang diupload bukan gambar.";
             }
-            // Check ukuran file (maks 2MB)
             elseif ($foto["size"] > 2000000) {
                 $error = "Ukuran file terlalu besar. Maksimal 2MB.";
             }
-            // Hanya format tertentu
             elseif (!in_array($imageFileType, ['jpg', 'jpeg', 'png', 'gif'])) {
                 $error = "Hanya format JPG, JPEG, PNG & GIF yang diizinkan.";
             }
-            // Coba upload file
             elseif (!move_uploaded_file($foto["tmp_name"], $target_file)) {
                 $error = "Maaf, terjadi error saat upload file.";
             }
         }
         
-        // Jika tidak ada error, insert ke database
         if (empty($error)) {
             $query = "INSERT INTO laporan (user_id, judul, isi, lokasi, foto) 
                       VALUES ($user_id, '$judul', '$isi', '$lokasi', '$foto_name')";
@@ -109,5 +101,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         </div>
     </div>
 </div>
+
 
 <?php include '../template/footer.php'; ?>
