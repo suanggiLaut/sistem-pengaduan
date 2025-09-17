@@ -2,23 +2,19 @@
 include '../template/header.php';
 include '../config/koneksi.php';
 
-// Pastikan session sudah dimulai dan hanya admin yang bisa akses
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Validasi level admin dengan lebih aman
 if (!isset($_SESSION['level']) || $_SESSION['level'] !== 'admin') {
     header("Location: ../user/dashboard.php");
     exit();
 }
 
-// Token CSRF untuk form tambah admin dan user
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
-// Query dengan prepared statement untuk mendapatkan semua laporan
 $query = "SELECT l.*, u.nama as nama_pelapor 
           FROM laporan l 
           JOIN users u ON l.user_id = u.id 
@@ -27,33 +23,27 @@ $stmt = mysqli_prepare($koneksi, $query);
 mysqli_stmt_execute($stmt);
 $result = mysqli_stmt_get_result($stmt);
 
-// Query untuk mendapatkan semua admin
 $admin_query = "SELECT id, nama, username FROM users WHERE level = 'admin'";
 $admin_stmt = mysqli_prepare($koneksi, $admin_query);
 mysqli_stmt_execute($admin_stmt);
 $admin_result = mysqli_stmt_get_result($admin_stmt);
 
-// Query untuk mendapatkan semua user (non-admin)
 $user_query = "SELECT id, nama, username FROM users WHERE level = 'user'";
 $user_stmt = mysqli_prepare($koneksi, $user_query);
 mysqli_stmt_execute($user_stmt);
 $user_result = mysqli_stmt_get_result($user_stmt);
 
-// Proses tambah admin
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['tambah_admin'])) {
     
-    // Validasi CSRF token
     if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
         $error = "Token keamanan tidak valid!";
-        $_SESSION['csrf_token'] = bin2hex(random_bytes(32)); // Regenerate token
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32)); 
     } else {
-        // Sanitasi input
         $nama = trim($_POST['nama']);
         $username = trim($_POST['username']);
         $password = $_POST['password'];
         $confirm_password = $_POST['confirm_password'];
         
-        // Validasi input
         if (empty($nama) || empty($username) || empty($password)) {
             $error = "Semua field harus diisi!";
         } elseif (strlen($password) < 8) {
@@ -63,7 +53,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['tambah_admin'])) {
         } elseif ($password !== $confirm_password) {
             $error = "Konfirmasi password tidak sesuai!";
         } else {
-            // Cek apakah username sudah ada dengan prepared statement
             $check_query = "SELECT id FROM users WHERE username = ?";
             $check_stmt = mysqli_prepare($koneksi, $check_query);
             mysqli_stmt_bind_param($check_stmt, "s", $username);
@@ -76,10 +65,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['tambah_admin'])) {
             } else {
                 mysqli_stmt_close($check_stmt);
                 
-                // Hash password dengan algoritma yang kuat
                 $hashed_password = password_hash($password, PASSWORD_DEFAULT, ['cost' => 12]);
                 
-                // Insert admin baru dengan prepared statement
                 $insert_query = "INSERT INTO users (nama, username, password, level) 
                                  VALUES (?, ?, ?, 'admin')";
                 $insert_stmt = mysqli_prepare($koneksi, $insert_query);
@@ -89,7 +76,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['tambah_admin'])) {
                     $_SESSION['success'] = "Admin berhasil ditambahkan!";
                     mysqli_stmt_close($insert_stmt);
                     
-                    // Regenerate CSRF token setelah operasi sukses
                     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                     
                     header("Location: dashboard.php");
@@ -101,26 +87,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['tambah_admin'])) {
             }
         }
         
-        // Regenerate CSRF token jika ada error
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
     }
 }
 
-// Proses tambah user
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['tambah_user'])) {
     
-    // Validasi CSRF token
     if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
         $error = "Token keamanan tidak valid!";
-        $_SESSION['csrf_token'] = bin2hex(random_bytes(32)); // Regenerate token
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32)); 
     } else {
-        // Sanitasi input
         $nama = trim($_POST['nama']);
         $username = trim($_POST['username']);
         $password = $_POST['password'];
         $confirm_password = $_POST['confirm_password'];
         
-        // Validasi input
         if (empty($nama) || empty($username) || empty($password)) {
             $error = "Semua field harus diisi!";
         } elseif (strlen($password) < 8) {
@@ -130,7 +111,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['tambah_user'])) {
         } elseif ($password !== $confirm_password) {
             $error = "Konfirmasi password tidak sesuai!";
         } else {
-            // Cek apakah username sudah ada dengan prepared statement
             $check_query = "SELECT id FROM users WHERE username = ?";
             $check_stmt = mysqli_prepare($koneksi, $check_query);
             mysqli_stmt_bind_param($check_stmt, "s", $username);
@@ -143,10 +123,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['tambah_user'])) {
             } else {
                 mysqli_stmt_close($check_stmt);
                 
-                // Hash password dengan algoritma yang kuat
                 $hashed_password = password_hash($password, PASSWORD_DEFAULT, ['cost' => 12]);
                 
-                // Insert user baru dengan prepared statement
                 $insert_query = "INSERT INTO users (nama, username, password, level) 
                                  VALUES (?, ?, ?, 'user')";
                 $insert_stmt = mysqli_prepare($koneksi, $insert_query);
@@ -156,7 +134,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['tambah_user'])) {
                     $_SESSION['success'] = "User berhasil ditambahkan!";
                     mysqli_stmt_close($insert_stmt);
                     
-                    // Regenerate CSRF token setelah operasi sukses
                     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                     
                     header("Location: dashboard.php");
@@ -168,16 +145,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['tambah_user'])) {
             }
         }
         
-        // Regenerate CSRF token jika ada error
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
     }
 }
 
-// Proses hapus user
 if (isset($_GET['hapus_user'])) {
     $user_id = intval($_GET['hapus_user']);
     
-    // Pastikan user yang dihapus bukan admin
     $check_level_query = "SELECT level FROM users WHERE id = ?";
     $check_level_stmt = mysqli_prepare($koneksi, $check_level_query);
     mysqli_stmt_bind_param($check_level_stmt, "i", $user_id);
@@ -189,7 +163,6 @@ if (isset($_GET['hapus_user'])) {
     if ($user_level === 'admin') {
         $_SESSION['error'] = "Tidak dapat menghapus admin!";
     } else {
-        // Hapus user dengan prepared statement
         $delete_query = "DELETE FROM users WHERE id = ?";
         $delete_stmt = mysqli_prepare($koneksi, $delete_query);
         mysqli_stmt_bind_param($delete_stmt, "i", $user_id);
@@ -206,13 +179,11 @@ if (isset($_GET['hapus_user'])) {
     }
 }
 
-// Tampilkan pesan success dari session jika ada
 if (isset($_SESSION['success'])) {
     $success = $_SESSION['success'];
     unset($_SESSION['success']);
 }
 
-// Tampilkan pesan error dari session jika ada
 if (isset($_SESSION['error'])) {
     $error = $_SESSION['error'];
     unset($_SESSION['error']);
@@ -320,7 +291,6 @@ if (isset($_SESSION['error'])) {
     </div>
 </div>
 
-<!-- Modal Tambah Admin -->
 <div class="modal fade" id="tambahAdminModal" tabindex="-1" aria-labelledby="tambahAdminModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -334,7 +304,6 @@ if (isset($_SESSION['error'])) {
                         <div class="alert alert-danger"><?php echo htmlspecialchars($error); ?></div>
                     <?php endif; ?>
                     
-                    <!-- CSRF Token -->
                     <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
                     
                     <div class="mb-3">
@@ -368,7 +337,6 @@ if (isset($_SESSION['error'])) {
     </div>
 </div>
 
-<!-- Modal Tambah User -->
 <div class="modal fade" id="tambahUserModal" tabindex="-1" aria-labelledby="tambahUserModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -382,7 +350,6 @@ if (isset($_SESSION['error'])) {
                         <div class="alert alert-danger"><?php echo htmlspecialchars($error); ?></div>
                     <?php endif; ?>
                     
-                    <!-- CSRF Token -->
                     <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
                     
                     <div class="mb-3">
@@ -417,10 +384,10 @@ if (isset($_SESSION['error'])) {
 </div>
 
 <?php 
-// Tutup statement
 if (isset($stmt)) mysqli_stmt_close($stmt);
 if (isset($admin_stmt)) mysqli_stmt_close($admin_stmt);
 if (isset($user_stmt)) mysqli_stmt_close($user_stmt);
 
 include '../template/footer.php'; 
+
 ?>
