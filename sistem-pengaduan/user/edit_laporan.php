@@ -2,21 +2,17 @@
 include '../template/header.php';
 include '../config/koneksi.php';
 
-// KERENTANAN 1: Validasi session yang lemah
 if (@$_SESSION['level'] != 'user') {
     header("Location: ../admin/dashboard.php");
 }
 
-// KERENTANAN 2: Tidak memvalidasi parameter ID dengan benar
 $user_id = $_SESSION['user_id'];
-$laporan_id = $_GET['id']; // Langsung mengambil tanpa filter
+$laporan_id = $_GET['id']; 
 
-// KERENTANAN 3: SQL Injection - langsung memasukkan input user ke query
 $query = "SELECT * FROM laporan WHERE id = $laporan_id AND user_id = $user_id";
 $result = mysqli_query($koneksi, $query);
 $laporan = mysqli_fetch_assoc($result);
 
-// KERENTANAN 4: Authorization bypass - hanya memeriksa apakah ada hasil, bukan kepemilikan
 if (!$laporan) {
     echo "<script>alert('Laporan tidak ditemukan!'); window.location='dashboard.php';</script>";
     exit();
@@ -26,21 +22,17 @@ $error = '';
 $success = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // KERENTANAN 5: Tidak menggunakan mysqli_real_escape_string atau prepared statements
     $judul = $_POST['judul'];
     $lokasi = $_POST['lokasi'];
     $isi = $_POST['isi'];
     $hapus_foto = isset($_POST['hapus_foto']) ? true : false;
     
-    // Validasi minimal
     if (empty($judul) || empty($isi)) {
         $error = "Judul dan isi laporan harus diisi!";
     } else {
-        // Proses upload foto baru jika ada
         $foto_name = $laporan['foto'];
         
         if ($hapus_foto && !empty($foto_name)) {
-            // Hapus foto lama
             $file_path = "../uploads/" . $foto_name;
             if (file_exists($file_path)) {
                 unlink($file_path);
@@ -49,7 +41,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
         
         if (!empty($_FILES['foto']['name'])) {
-            // Hapus foto lama jika ada
             if (!empty($foto_name)) {
                 $file_path = "../uploads/" . $foto_name;
                 if (file_exists($file_path)) {
@@ -57,45 +48,35 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 }
             }
             
-            // Upload foto baru
             $foto = $_FILES['foto'];
             $foto_name = time() . '_' . basename($foto['name']);
             $target_dir = "../uploads/";
             $target_file = $target_dir . $foto_name;
             
-            // KERENTANAN 6: Validasi upload file yang lemah
-            // Hanya memeriksa ekstensi file, bukan tipe MIME yang sebenarnya
             $imageFileType = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
             
-            // Check jika file adalah gambar (bisa diakali)
             $check = getimagesize($foto["tmp_name"]);
             if ($check === false) {
                 $error = "File yang diupload bukan gambar.";
             }
-            // Check ukuran file (maks 2MB)
             elseif ($foto["size"] > 2000000) {
                 $error = "Ukuran file terlalu besar. Maksimal 2MB.";
             }
-            // Hanya format tertentu
             elseif (!in_array($imageFileType, ['jpg', 'jpeg', 'png', 'gif'])) {
                 $error = "Hanya format JPG, JPEG, PNG & GIF yang diizinkan.";
             }
-            // Coba upload file
             else {
                 move_uploaded_file($foto["tmp_name"], $target_file);
             }
         }
         
-        // Jika tidak ada error, update database
         if (empty($error)) {
-            // KERENTANAN 7: SQL Injection pada update query
             $update_query = "UPDATE laporan SET judul = '$judul', lokasi = '$lokasi', 
                              isi = '$isi', foto = '$foto_name' 
                              WHERE id = $laporan_id";
             
             if (mysqli_query($koneksi, $update_query)) {
                 $success = "Laporan berhasil diperbarui!";
-                // Refresh data
                 $result = mysqli_query($koneksi, $query);
                 $laporan = mysqli_fetch_assoc($result);
             } else {
@@ -121,7 +102,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     <div class="alert alert-success"><?php echo $success; ?></div>
                 <?php endif; ?>
                 
-                <!-- KERENTANAN 8: Form tanpa CSRF protection -->
                 <form method="POST" action="" enctype="multipart/form-data">
                     <input type="hidden" name="id" value="<?php echo $laporan_id; ?>">
                     
@@ -156,7 +136,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     
                     <div class="mb-3">
                         <label for="isi" class="form-label">Isi Laporan <span class="text-danger">*</span></label>
-                        <!-- KERENTANAN 9: Output tanpa escaping - memungkinkan XSS -->
                         <textarea class="form-control" id="isi" name="isi" rows="5" required><?php echo $laporan['isi']; ?></textarea>
                     </div>
                     
@@ -168,5 +147,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         </div>
     </div>
 </div>
+
 
 <?php include '../template/footer.php'; ?>
